@@ -3,16 +3,15 @@ var express = require('express'),
     server = require('http').createServer(app),
     io = require('socket.io').listen(server),
     users = [];
-//specify the html we will use
+
+//使用www文件夹作为视图层的目录
 app.use('/', express.static(__dirname + '/www'));
-//bind the server to the 80 port
-//server.listen(3000);//for local test
-server.listen(process.env.PORT || 3000);//publish to heroku
-//server.listen(process.env.OPENSHIFT_NODEJS_PORT || 3000);//publish to openshift
-//console.log('server started on port'+process.env.PORT || 3000);
-//handle the socket
+
+server.listen(process.env.PORT || 3000);
+
+//socket.io的使用
 io.sockets.on('connection', function(socket) {
-    //new user login
+    //当新用户连接的时候
     socket.on('login', function(nickname) {
         if (users.indexOf(nickname) > -1) {
             socket.emit('nickExisted');
@@ -24,16 +23,16 @@ io.sockets.on('connection', function(socket) {
             io.sockets.emit('system', nickname, users.length, 'login');
         };
     });
-    //user leaves
+    //当有用户离开时
     socket.on('disconnect', function() {
         users.splice(socket.userIndex, 1);
         socket.broadcast.emit('system', socket.nickname, users.length, 'logout');
     });
-    //new message get
+    //当用户发送信息
     socket.on('postMsg', function(msg, color) {
         socket.broadcast.emit('newMsg', socket.nickname, msg, color);
     });
-    //new image get
+    //用户发送图片
     socket.on('img', function(imgData, color) {
         socket.broadcast.emit('newImg', socket.nickname, imgData, color);
     });
